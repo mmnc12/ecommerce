@@ -34,7 +34,7 @@ $app->get("/categories/:idcategory", function($idcategory){
 			'page'=>$i
 		]);
 	}
-	
+
 	$page = new Page();
 
 	$page->setTpl("category", [
@@ -43,6 +43,20 @@ $app->get("/categories/:idcategory", function($idcategory){
 		'pages'=>$pages
 	]);
 
+});
+
+$app->get("/products/:desurl", function($desurl){
+
+	$product = new Product();
+
+	$product->getFromURL($desurl);
+		
+	$page = new Page();
+
+	$page->setTpl("product-detail", [
+		'product'=>$product->getValues(),
+		'categories'=>$product->getCategories()
+	]);
 });
 
 ?>
