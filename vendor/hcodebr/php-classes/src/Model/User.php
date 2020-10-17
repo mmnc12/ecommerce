@@ -6,45 +6,45 @@
 	use \Hcode\Model;
 	use \Hcode\Mailer;
 
-	const SECRET = "HcodePhp7_Secret";
-	const SECRET_IV = "HcodePhp7_Secret_IV";
-
-
 	class User extends Model {
 
 		const SESSION = "User";
 		const SECRET = "HcodePhp7_Secret";
 		const SECRET_IV = "HcodePhp7_Secret_IV";
+		const ERROR = "UserError";
+		const ERROR_REGISTER = "UserErrorRegister";
 
 		public static function getFromSession()
 		{
-
 			$user = new User();
 
-			if (isset($_SESSION[User::SESSION]) && ($_SESSION[User::SESSION]['iduser']) > 0) {
-				
+			if (isset($_SESSION[User::SESSION]) && (int)$_SESSION[User::SESSION]['iduser'] > 0) {
+
 				$user->setData($_SESSION[User::SESSION]);
+
 			}
 
 			return $user;
+
 		}
 
 		public static function checkLogin($inadmin = true)
 		{
 
 			if (
-				!isset($_SESSION[User::SESSION])
-				||
-				!$_SESSION[User::SESSION]
-				||
-				!(int)$_SESSION[User::SESSION]["iduser"] > 0
+			!isset($_SESSION[User::SESSION])
+			||
+			!$_SESSION[User::SESSION]
+			||
+			!(int)$_SESSION[User::SESSION]["iduser"] > 0
 			) {
-				//Não está logado
-				return false;		
+			//Não está logado
+			return false;
+
 			} else {
 
 				if ($inadmin === true && (bool)$_SESSION[User::SESSION]['inadmin'] === true) {
-					
+
 					return true;
 
 				} else if ($inadmin === false) {
@@ -59,14 +59,15 @@
 
 			}
 
+
 		}
 
 		public static function login($login, $password)
 		{
 			$sql = new Sql();
 
-			$results = $sql->select("SELECT * FROM tb_users WHERE deslogin = :LOGIN", array(
-				"LOGIN"=>$login
+			$results = $sql->select("SELECT * FROM tb_users a INNER JOIN tb_persons b ON a.idperson = b.idperson WHERE a.deslogin = :LOGIN", array(
+				":LOGIN"=>$login
 			));
 
 			if(count($results) === 0)
@@ -81,6 +82,8 @@
 			{
 
 				$user = new User();
+
+				$data['desperson'] = utf8_encode($data['desperson']);
 
 				$user->setData($data);
 
@@ -97,9 +100,16 @@
 		public static function verifyLogin($inadmin = true)
 		{
 
-			if(User::checkLogin($inadmin)) {
+			if(!User::checkLogin($inadmin)) {
 
-				header("Location: /admin/login");
+				if($inadmin) {
+
+					header("Location: /admin/login");
+				
+				} else {
+
+					header("Location: /login");
+				}
 				exit;
 			}
 		}
@@ -129,6 +139,8 @@
 			 ));
 			 
 			 $data = $results[0];
+
+			 $data['desperson'] = utf8_encode($data['desperson']);
 			 
 			 $this->setData($data);
 		 
@@ -309,6 +321,34 @@
 		));
 
 	}
+
+	public static function setError($msg)
+		{
+
+			$_SESSION[User::ERROR] = $msg;
+		}
+
+		public static function getError()
+		{
+
+			$msg = (isset($_SESSION[User::ERROR]) && $_SESSION[User::ERROR]) ? $_SESSION[User::ERROR] : '';
+
+			User::clearError();
+
+			return $msg;
+		}
+
+		public static function clearError()
+		{
+
+			$_SESSION[User::ERROR] = NULL;
+		}
+
+		public static function setErrorRegister($msg)
+		{
+
+			$_SESSION[User::ERROR_REGISTER] = $msg;
+		}
 
 
 	public static function getPasswordHash($password)
